@@ -1,7 +1,7 @@
-Name        |   Date    |   CheckIn   |   CheckOut    |   Duration |   Task (Optional)
-EG          | 11/05/18  |   19:15     |    19:52      |    40      |   Created user story cards
-AA          | 11/05/18  |   19:15     |               |
-JJ          | 11/05/18  |   19:15     |               |
-RJ          | 11/05/18  |   19:15     |               |
-NW          | 11/05/18  |   19:15     |               |
+Name        |   Date    |   CheckIn   |   CheckOut    |   Duration  |   Task (Optional)
+EG          | 11/05/18  |   19:15     |    19:52      |     37      |   Created user story cards
+AA          | 11/05/18  |   19:15     |    19:52      |     37      |
+JJ          | 11/05/18  |   19:15     |    19:52      |     37      |
+RJ          | 11/05/18  |   19:15     |    19:52      |     37      |
+NW          | 11/05/18  |   19:15     |    19:52      |     37      |
 EG          | 11/06/18  |   14:40                                   |  Reading Cosmo SDK 
