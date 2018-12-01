@@ -62,6 +62,8 @@ map_color_to_light = {
 # But applying hsv_color_distance_sqr between this color and all the colors in hsv_color_ranges
 # will show that (88.0, 0.4, 0.9) is closest to the 'green' region.
 
+
+
 hsv_color_ranges = {
 'red' : (-20.0, 20.0, 0.5, 1.0, 0.5, 1.0), 
 'green' : (90.0, 155.0, 0.5, 1.0, 0.5, 1.0), 
@@ -190,6 +192,10 @@ DOWNSIZE_HEIGHT = 24
 
 
 class ColorFinder(cozmo.annotate.Annotator):
+
+    global running
+    running = True
+
     '''Cozmo looks around and drives after colors.
 
     Cozmo's camera view is approximated into a matrix of colors.
@@ -199,7 +205,7 @@ class ColorFinder(cozmo.annotate.Annotator):
     Args:
         robot (cozmo.robot.Robot): instance of the robot connected from run_program.
     '''
-    def __init__(self, robot: cozmo.robot.Robot):
+    def __init__(self, robot: cozmo.robot.Robot, color):
         self.robot = robot
         self.robot.camera.image_stream_enabled = True
         self.robot.camera.color_image_enabled = True
@@ -209,7 +215,7 @@ class ColorFinder(cozmo.annotate.Annotator):
         self.robot.add_event_handler(cozmo.world.EvtNewCameraImage, self.on_new_camera_image)
 
         self.color_selector_cube = None # type: LightCube
-        self.color_to_find = 'yellow'
+        self.color_to_find = color
         self.color_to_find_index = POSSIBLE_COLORS_TO_FIND.index(self.color_to_find)
 
         self.grid_cube = None # type: LightCube
@@ -233,6 +239,9 @@ class ColorFinder(cozmo.annotate.Annotator):
 
         self.white_balance_cube = None # type: LightCube
         self.adjustment = None
+
+        def __del__(self):
+            print('Destructor called, vehicle deleted.')
 
     def apply(self, image, scale):
         '''Draws a pixelated grid of Cozmo's approximate camera view onto the viewer window.
@@ -278,12 +287,15 @@ class ColorFinder(cozmo.annotate.Annotator):
             self.white_balance()
 
     def toggle_color_to_find(self):
-        '''Sets self.color_to_find to the next color in POSSIBLE_COLORS_TO_FIND.'''    
+        '''Sets self.color_to_find to the next color in POSSIBLE_COLORS_TO_FIND.'''
+
+
         self.color_to_find_index += 1
         if self.color_to_find_index == len(POSSIBLE_COLORS_TO_FIND):
             self.color_to_find_index = 0
         self.color_to_find = POSSIBLE_COLORS_TO_FIND[self.color_to_find_index]
         self.color_selector_cube.set_lights(map_color_to_light[self.color_to_find])
+
 
     def on_new_camera_image(self, evt, **kwargs):
         '''Processes the blobs in Cozmo's view, and determines the correct reaction.'''
@@ -378,6 +390,9 @@ class ColorFinder(cozmo.annotate.Annotator):
         else:
             self.drive_toward_color_blob()
 
+
+
+
     def moved_too_far_from_center(self, amount_to_move_head, amount_to_rotate):
         '''Decides whether the center of the blob is too far from the center of Cozmo's view.
 
@@ -416,8 +431,14 @@ class ColorFinder(cozmo.annotate.Annotator):
         self.abort_actions(self.tilt_head_action, self.rotate_action)
         if self.should_start_new_action(self.drive_action):
             self.drive_action = self.robot.drive_straight(distance_mm(500), speed_mmps(300), should_play_anim=False, in_parallel=True)
+
         if self.should_start_new_action(self.lift_action):
-            self.lift_action = self.robot.set_lift_height(1.0, in_parallel=True)
+            print("found" + self.color_to_find)
+        global running
+        running = False
+
+            #self.lift_action = self.robot.set_lift_height(1.0, in_parallel=True)
+
 
     def turn_toward_last_known_blob(self):
         '''Turns toward the coordinates of the last recorded blob in memory.
@@ -472,7 +493,10 @@ class ColorFinder(cozmo.annotate.Annotator):
         self.white_balance_cube = self.robot.world.get_light_cube(cozmo.objects.LightCube3Id)
         return not (self.color_selector_cube == None or self.grid_cube == None or self.white_balance_cube == None)
 
-    async def run(self):
+    async def run(self) -> object:
+
+
+
         '''Program runs until typing CRTL+C into Terminal/Command Prompt, 
         or by closing the viewer window.
         '''    
@@ -482,14 +506,21 @@ class ColorFinder(cozmo.annotate.Annotator):
         self.turn_on_cubes()
         await self.robot.drive_straight(distance_mm(100), speed_mmps(50), should_play_anim = False).wait_for_completed()
 
+
+
         # Updates self.state and resets self.amount_turned_recently every 1 second.
-        while True:
+        while running:
             await asyncio.sleep(1)
+            print(self.color_to_find)
+            print(self.state)
             if self.state == LOOK_AROUND_STATE:
                 await self.start_lookaround()
+                print("In look around state")
             if self.state == FOUND_COLOR_STATE and self.amount_turned_recently < self.moving_threshold:
                 self.state = DRIVING_STATE
             self.amount_turned_recently = radians(0)
+
+        self.robot.abort_all_actions()
 
 
 class BlobDetector():

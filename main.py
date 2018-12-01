@@ -58,8 +58,23 @@ async def test_cozmo_program(robot: cozmo.robot.Robot):
     await robot.say_text("Purple").wait_for_completed()
 
 # Cozmo waits and looks for 1 of 2 colors
-    colorFinder = color_finder.ColorFinder(robot)
-    await colorFinder.run(timeout=3)
+    colorFinder1 = color_finder.ColorFinder(robot, 'red')
+
+
+    await colorFinder1.run()
+    print("returning to main")
+    await robot.say_text("I found red").wait_for_completed()
+
+
+
+    colorFinder2 = color_finder.ColorFinder(robot, 'yellow')
+    await colorFinder2.run()
+
+    print("returning to main")
+    await robot.say_text("I found yellow").wait_for_completed()
+
+
+# modify color_finder to search for specific colors
 
 # If Cozmo cannot find a color in a specified period of time, begin speaking clues
 
